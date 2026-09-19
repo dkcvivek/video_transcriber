@@ -48,7 +48,7 @@
     }
 
     main {
-      max-width: 760px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 32px 16px 64px;
     }
@@ -71,31 +71,11 @@
       margin-bottom: 16px;
     }
 
-    label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      display: block;
-      margin-bottom: 6px;
-    }
-
     .row {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
-    }
-
-    input[type=password],
-    input[type=text],
-    select {
-      flex: 1;
-      min-width: 0;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg);
-      color: var(--text);
-      font: inherit;
     }
 
     button {
@@ -109,6 +89,11 @@
       cursor: pointer;
     }
 
+    button.small {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
     button.primary {
       background: var(--accent);
       border-color: var(--accent);
@@ -120,6 +105,15 @@
       cursor: not-allowed;
     }
 
+    .remove {
+      border: none;
+      background: none;
+      color: var(--muted);
+      padding: 0 4px;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
     .hint {
       color: var(--muted);
       font-size: 0.85rem;
@@ -129,7 +123,7 @@
     .drop {
       border: 2px dashed var(--border);
       border-radius: 12px;
-      padding: 36px 16px;
+      padding: 28px 16px;
       text-align: center;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
@@ -146,26 +140,89 @@
       font-size: 1.05rem;
     }
 
+    .actions {
+      margin-top: 16px;
+      justify-content: space-between;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 0 12px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .col-file {
+      width: 26%;
+    }
+
+    .col-status {
+      width: 22%;
+    }
+
     .file-name {
-      margin-top: 10px;
       font-weight: 600;
       word-break: break-all;
     }
 
-    .status {
-      display: none;
+    .file-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
     }
 
-    .status.show {
-      display: block;
+    .size {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .msg {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .msg.wait {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .msg.err {
+      color: var(--err);
+    }
+
+    .msg.ok {
+      color: var(--ok);
     }
 
     .bar {
-      height: 8px;
+      height: 6px;
       background: var(--border);
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
-      margin-top: 10px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .bar.show {
+      display: block;
     }
 
     .bar>div {
@@ -190,42 +247,65 @@
       }
     }
 
-    .msg {
-      font-weight: 600;
-    }
-
-    .msg.err {
-      color: var(--err);
-    }
-
-    .msg.ok {
-      color: var(--ok);
+    .elapsed {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 4px;
     }
 
     textarea {
       width: 100%;
-      min-height: 280px;
-      padding: 12px;
+      min-height: 120px;
+      padding: 10px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--bg);
       color: var(--text);
-      font: inherit;
+      font-family: inherit;
+      font-size: 0.9rem;
+      line-height: 1.5;
       resize: vertical;
     }
 
-    .result-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
+    .copy-row {
+      margin-top: 6px;
     }
 
-    .result-head h2 {
-      font-size: 1.1rem;
-      margin: 0;
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    /* On phones, each row becomes a stacked card. */
+    @media (max-width: 720px) {
+
+      thead {
+        display: none;
+      }
+
+      table,
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100%;
+      }
+
+      tr {
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+      }
+
+      td {
+        border: none;
+        padding: 6px 0;
+      }
+
+      .col-file,
+      .col-status {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -233,38 +313,43 @@
 <body>
   <main>
     <h1>Video Transcriber</h1>
-    <p class="sub">Upload a video or audio file and get the text back, ready to copy.</p>
+    <p class="sub">Add up to 15 videos, transcribe them all at once, and copy the text from each row.</p>
 
     <section class="card">
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a video or audio file">
-        <strong>Drop a video here, or click to choose</strong>
-        <span class="hint">MP4, MOV, MKV, WEBM, MP3, WAV, M4A…</span>
-        <div class="file-name" id="fileName"></div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose video or audio files">
+        <strong>Drop videos here, or click to choose</strong>
+        <span class="hint">Up to 15 files · MP4, MOV, MKV, WEBM, MP3, WAV, M4A…</span>
       </div>
-      <input type="file" id="file" accept="video/*,audio/*" hidden>
+      <input type="file" id="file" accept="video/*,audio/*" multiple hidden>
+      <p class="hint" id="note"></p>
 
-      <div class="row" style="margin-top:16px">
-        <button class="primary" id="go" disabled>Transcribe</button>
-      </div>
-    </section>
-
-    <section class="card status" id="status">
-      <div class="msg" id="msg"></div>
-      <div class="bar" id="bar">
-        <div id="barFill"></div>
-      </div>
-      <p class="hint" id="elapsed"></p>
-    </section>
-
-    <section class="card status" id="result">
-      <div class="result-head">
-        <h2>Transcript</h2>
+      <div class="row actions">
         <div class="row">
-          <button id="copy">Copy</button>
-          <button id="download">Download .txt</button>
+          <button class="primary" id="go" disabled>Transcribe all</button>
+          <button id="clear" disabled>Clear list</button>
+        </div>
+        <div class="row">
+          <button id="copyAll" disabled>Copy all</button>
+          <button id="downloadAll" disabled>Download all .txt</button>
         </div>
       </div>
-      <textarea id="text" spellcheck="false"></textarea>
+    </section>
+
+    <section class="card">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-file">Video</th>
+            <th class="col-status">Status</th>
+            <th>Transcript</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr>
+            <td colspan="3" class="empty">No videos added yet.</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
   </main>
 
@@ -275,62 +360,110 @@
     // Paste the AssemblyAI API key here once.
     const ASSEMBLYAI_KEY = '88e7e255a592447fa252a8d48fe19c96';
 
-    let file = null;
-    let timer = null;
+    const MAX_FILES = 15;
+    // Only this many files upload at the same time, so they don't all fight for the same internet connection.
+    const MAX_UPLOADS = 3;
 
-    // Picking a file: by click, keyboard, or drag and drop.
+    // One entry per table row: { file, state, text, tr }. state is 'waiting', 'working', 'done' or 'error'.
+    const jobs = [];
+    let uploadsRunning = 0;
+    const uploadQueue = [];
+
+    // Picking files: by click, keyboard, or drag and drop.
     const drop = $('drop');
     drop.onclick = () => $('file').click();
     drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
-    $('file').onchange = () => pickFile($('file').files[0]);
+    $('file').onchange = () => { addFiles($('file').files); $('file').value = ''; };
     drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
     drop.ondragleave = () => drop.classList.remove('over');
     drop.ondrop = e => {
       e.preventDefault();
       drop.classList.remove('over');
-      pickFile(e.dataTransfer.files[0]);
+      addFiles(e.dataTransfer.files);
     };
 
-    function pickFile(f) {
-      if (!f) return;
-      file = f;
-      $('fileName').textContent = `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB)`;
-      refreshButton();
+    function addFiles(list) {
+      const room = MAX_FILES - jobs.length;
+      const files = [...list].slice(0, room);
+      const skipped = list.length - files.length;
+      $('note').textContent = skipped > 0 ? `Only ${MAX_FILES} videos fit in the list, so ${skipped} file(s) were left out.` : '';
+      files.forEach(f => {
+        const job = { file: f, state: 'waiting', text: '' };
+        job.tr = buildRow(job);
+        jobs.push(job);
+      });
+      render();
     }
 
-    function refreshButton() {
-      $('go').disabled = !file;
+    function buildRow(job) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="col-file">
+          <div class="file-head">
+            <div class="file-name"></div>
+            <button class="remove" title="Remove this video" aria-label="Remove this video">×</button>
+          </div>
+          <div class="size">${(job.file.size / 1024 / 1024).toFixed(1)} MB</div>
+        </td>
+        <td class="col-status">
+          <div class="msg wait">Waiting to start</div>
+          <div class="bar"><div></div></div>
+          <div class="elapsed"></div>
+        </td>
+        <td>
+          <textarea spellcheck="false" placeholder="The transcript will appear here."></textarea>
+          <div class="row copy-row"><button class="small copy" disabled>Copy</button></div>
+        </td>`;
+      tr.querySelector('.file-name').textContent = job.file.name;
+      tr.querySelector('.remove').onclick = () => {
+        jobs.splice(jobs.indexOf(job), 1);
+        render();
+      };
+      const copyBtn = tr.querySelector('.copy');
+      copyBtn.onclick = () => copyText(tr.querySelector('textarea').value, copyBtn);
+      return tr;
     }
 
-    function setStatus(text, kind = '', progress = null) {
-      $('status').classList.add('show');
-      $('msg').textContent = text;
-      $('msg').className = 'msg ' + kind;
-      const bar = $('bar');
-      bar.style.display = kind ? 'none' : '';
+    // Redraw the table body and set which buttons can be clicked.
+    function render() {
+      const body = $('rows');
+      body.innerHTML = '';
+      if (!jobs.length) {
+        body.innerHTML = '<tr><td colspan="3" class="empty">No videos added yet.</td></tr>';
+      }
+      jobs.forEach(j => {
+        j.tr.querySelector('.remove').style.visibility = j.state === 'working' ? 'hidden' : '';
+        body.appendChild(j.tr);
+      });
+      const busy = jobs.some(j => j.state === 'working');
+      const hasText = jobs.some(j => j.state === 'done');
+      $('go').disabled = !jobs.some(j => j.state === 'waiting' || j.state === 'error');
+      $('clear').disabled = !jobs.length || busy;
+      $('copyAll').disabled = !hasText;
+      $('downloadAll').disabled = !hasText;
+      drop.style.display = jobs.length >= MAX_FILES ? 'none' : '';
+    }
+
+    function setStatus(job, text, kind = '', progress = null) {
+      const msg = job.tr.querySelector('.msg');
+      const bar = job.tr.querySelector('.bar');
+      msg.textContent = text;
+      msg.className = 'msg ' + kind;
+      bar.classList.toggle('show', !kind);
       bar.classList.toggle('busy', progress === null && !kind);
-      $('barFill').style.width = progress === null ? '' : progress + '%';
+      bar.firstElementChild.style.width = progress === null ? '' : progress + '%';
     }
 
-    function startTimer() {
-      const start = Date.now();
-      clearInterval(timer);
-      timer = setInterval(() => {
-        const s = Math.floor((Date.now() - start) / 1000);
-        $('elapsed').textContent = `Time so far: ${Math.floor(s / 60)}m ${s % 60}s`;
-      }, 1000);
-    }
-
-    // Step 1: send the file to AssemblyAI. XMLHttpRequest is used because it reports upload progress.
-    function upload(key) {
+    // Step 1: send one file to AssemblyAI. XMLHttpRequest is used because it reports upload progress.
+    function upload(job) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', API + '/upload');
-        xhr.setRequestHeader('authorization', key);
+        xhr.setRequestHeader('authorization', ASSEMBLYAI_KEY);
         xhr.upload.onprogress = e => {
           if (e.lengthComputable) {
             const pct = Math.round(e.loaded / e.total * 100);
-            setStatus(`Uploading… ${pct}%`, '', pct);
+            setStatus(job, `Uploading… ${pct}%`, '', pct);
           }
         };
         xhr.onload = () => {
@@ -338,8 +471,25 @@
           else reject(new Error(readError(xhr.status, xhr.responseText)));
         };
         xhr.onerror = () => reject(new Error('Network error while uploading.'));
-        xhr.send(file);
+        xhr.send(job.file);
       });
+    }
+
+    // Waits for a free upload slot, uploads, then frees the slot for the next file.
+    async function uploadWhenFree(job) {
+      if (uploadsRunning >= MAX_UPLOADS) {
+        setStatus(job, 'In line to upload…', 'wait');
+        await new Promise(r => uploadQueue.push(r));
+      }
+      uploadsRunning++;
+      try {
+        setStatus(job, 'Uploading… 0%', '', 0);
+        return await upload(job);
+      } finally {
+        uploadsRunning--;
+        const next = uploadQueue.shift();
+        if (next) next();
+      }
     }
 
     function readError(status, body) {
@@ -347,10 +497,10 @@
       catch { return status === 401 ? 'The API key was not accepted.' : `Request failed (${status})`; }
     }
 
-    async function api(path, key, options = {}) {
+    async function api(path, options = {}) {
       const res = await fetch(API + path, {
         ...options,
-        headers: { authorization: key, 'content-type': 'application/json' },
+        headers: { authorization: ASSEMBLYAI_KEY, 'content-type': 'application/json' },
       });
       const body = await res.text();
       if (!res.ok) throw new Error(readError(res.status, body));
@@ -365,60 +515,92 @@
       return t.text || '';
     }
 
-    $('go').onclick = async () => {
-      const key = ASSEMBLYAI_KEY;
-
-      $('go').disabled = true;
-      $('result').classList.remove('show');
-      $('elapsed').textContent = '';
-      startTimer();
+    async function run(job) {
+      job.state = 'working';
+      render();
+      const start = Date.now();
+      const elapsed = job.tr.querySelector('.elapsed');
+      const timer = setInterval(() => {
+        const s = Math.floor((Date.now() - start) / 1000);
+        elapsed.textContent = `Time so far: ${Math.floor(s / 60)}m ${s % 60}s`;
+      }, 1000);
 
       try {
-        setStatus('Uploading… 0%', '', 0);
-        const audioUrl = await upload(key);
+        const audioUrl = await uploadWhenFree(job);
 
         // Step 2: ask AssemblyAI to transcribe the uploaded file.
-        setStatus('Transcribing… this usually takes a fraction of the video length.');
+        setStatus(job, 'Transcribing…');
         const request = { audio_url: audioUrl, language_code: 'en', speaker_labels: true };
-        const job = await api('/transcript', key, { method: 'POST', body: JSON.stringify(request) });
+        const created = await api('/transcript', { method: 'POST', body: JSON.stringify(request) });
 
-        // Step 3: check every 3 seconds until it is done.
-        let t = job;
+        // Step 3: check every 5 seconds until it is done.
+        let t = created;
         while (t.status !== 'completed' && t.status !== 'error') {
-          await new Promise(r => setTimeout(r, 3000));
-          t = await api('/transcript/' + job.id, key);
+          await new Promise(r => setTimeout(r, 5000));
+          t = await api('/transcript/' + created.id);
         }
         if (t.status === 'error') throw new Error(t.error || 'Transcription failed.');
 
-        const text = toText(t);
-        $('text').value = text || '(No speech was found in this file.)';
-        $('result').classList.add('show');
-        setStatus('Done.', 'ok');
+        job.text = toText(t) || '(No speech was found in this file.)';
+        job.tr.querySelector('textarea').value = job.text;
+        job.tr.querySelector('.copy').disabled = false;
+        job.state = 'done';
+        setStatus(job, 'Done', 'ok');
       } catch (e) {
-        setStatus(e.message, 'err');
+        job.state = 'error';
+        setStatus(job, e.message + ' Click "Transcribe all" to try again.', 'err');
       } finally {
         clearInterval(timer);
-        refreshButton();
+        render();
       }
+    }
+
+    // Starts every row that hasn't finished yet. Failed rows are tried again.
+    $('go').onclick = () => {
+      jobs.filter(j => j.state === 'waiting' || j.state === 'error').forEach(run);
     };
 
-    $('copy').onclick = async () => {
-      try { await navigator.clipboard.writeText($('text').value); }
-      catch { $('text').select(); document.execCommand('copy'); }
-      $('copy').textContent = 'Copied!';
-      setTimeout(() => $('copy').textContent = 'Copy', 1500);
+    $('clear').onclick = () => {
+      jobs.length = 0;
+      $('note').textContent = '';
+      render();
     };
 
-    $('download').onclick = () => {
-      const blob = new Blob([$('text').value], { type: 'text/plain' });
+    async function copyText(text, btn) {
+      try { await navigator.clipboard.writeText(text); }
+      catch {
+        const t = document.createElement('textarea');
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        t.remove();
+      }
+      const label = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = label, 1500);
+    }
+
+    // All finished transcripts in one block, each under its file name.
+    function allText() {
+      return jobs
+        .filter(j => j.state === 'done')
+        .map(j => `=== ${j.file.name} ===\n\n${j.tr.querySelector('textarea').value}`)
+        .join('\n\n\n');
+    }
+
+    $('copyAll').onclick = () => copyText(allText(), $('copyAll'));
+
+    $('downloadAll').onclick = () => {
+      const blob = new Blob([allText()], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = (file ? file.name.replace(/\.[^.]+$/, '') : 'transcript') + '.txt';
+      a.download = 'transcripts.txt';
       a.click();
       URL.revokeObjectURL(a.href);
     };
 
-    refreshButton();
+    render();
   </script>
 </body>
 
