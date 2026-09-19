@@ -50,7 +50,7 @@
     main {
       max-width: 1600px;
       margin: 0 auto;
-      padding: 16px 16px 32px;
+      padding: 6px 16px 32px;
     }
 
     .top {
@@ -59,7 +59,7 @@
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     h1 {
@@ -186,7 +186,7 @@
     /* Video height is worked out from the screen height so at least 4 rows fit:
        (screen - header and table top) / 4 rows - (skip buttons + row padding). */
     .col-preview video {
-      height: clamp(80px, calc((100vh - 110px) / 4 - 46px), 240px);
+      height: clamp(80px, calc((100vh - 84px) / 4 - 46px), 240px);
       width: auto;
       aspect-ratio: 16 / 9;
       background: #000;
@@ -378,9 +378,8 @@
         <p class="hint" id="note"></p>
       </div>
       <div class="row" id="actions">
-        <button class="primary" id="go" disabled>Transcribe all</button>
-        <button id="clear" disabled>Clear list</button>
-        <button id="copyAll" disabled>Copy all</button>
+        <button class="small primary" id="go" disabled>Transcribe all</button>
+        <button class="small" id="clear" disabled>Clear list</button>
       </div>
     </header>
 
@@ -520,10 +519,8 @@
         body.appendChild(j.tr);
       });
       const busy = jobs.some(j => j.state === 'working');
-      const hasText = jobs.some(j => j.state === 'done');
       $('go').disabled = !jobs.some(j => j.state === 'waiting' || j.state === 'error');
       $('clear').disabled = !jobs.length || busy;
-      $('copyAll').disabled = !hasText;
       // Before any videos are added only the picker shows; after, only the buttons.
       $('picker').style.display = jobs.length ? 'none' : '';
       $('sub').style.display = jobs.length ? 'none' : '';
@@ -659,16 +656,6 @@
       btn.textContent = 'Copied!';
       setTimeout(() => btn.textContent = label, 1500);
     }
-
-    // All finished transcripts in one block, each under its file name.
-    function allText() {
-      return jobs
-        .filter(j => j.state === 'done')
-        .map(j => `=== ${j.file.name} ===\n\n${j.tr.querySelector('textarea').value}`)
-        .join('\n\n\n');
-    }
-
-    $('copyAll').onclick = () => copyText(allText(), $('copyAll'));
 
     render();
   </script>
