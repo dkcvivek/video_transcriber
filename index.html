@@ -175,7 +175,7 @@
     }
 
     .col-file {
-      width: 13%;
+      width: 9%;
     }
 
     /* Shrinks to fit the video. */
@@ -183,10 +183,10 @@
       width: 1%;
     }
 
-    /* Video height is worked out from the screen height so at least 4 rows fit:
-       (screen - header and table top) / 4 rows - (skip buttons + row padding). */
+    /* Video height is worked out from the screen height so at least 3 rows fit:
+       (screen - header and table top) / 3 rows - (skip buttons + row padding). */
     .col-preview video {
-      height: clamp(80px, calc((100vh - 84px) / 4 - 46px), 240px);
+      height: clamp(100px, calc((100vh - 84px) / 3 - 46px), 360px);
       width: auto;
       aspect-ratio: 16 / 9;
       background: #000;
