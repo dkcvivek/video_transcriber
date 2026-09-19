@@ -48,27 +48,27 @@
     }
 
     main {
-      max-width: 1200px;
+      max-width: 1600px;
       margin: 0 auto;
-      padding: 32px 16px 64px;
+      padding: 16px 16px 32px;
     }
 
     h1 {
-      font-size: 1.6rem;
-      margin: 0 0 4px;
+      font-size: 1.3rem;
+      margin: 0 0 2px;
     }
 
     .sub {
       color: var(--muted);
-      margin: 0 0 24px;
+      margin: 0 0 12px;
     }
 
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
 
     .row {
@@ -79,7 +79,7 @@
     }
 
     button {
-      padding: 10px 16px;
+      padding: 7px 14px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--card);
@@ -90,7 +90,7 @@
     }
 
     button.small {
-      padding: 6px 12px;
+      padding: 4px 10px;
       font-size: 0.85rem;
     }
 
@@ -123,7 +123,7 @@
     .drop {
       border: 2px dashed var(--border);
       border-radius: 12px;
-      padding: 28px 16px;
+      padding: 20px 16px;
       text-align: center;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
@@ -155,12 +155,12 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
       color: var(--muted);
-      padding: 0 12px 10px;
+      padding: 0 8px 6px;
       border-bottom: 1px solid var(--border);
     }
 
     td {
-      padding: 14px 12px;
+      padding: 8px;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
     }
@@ -170,81 +170,33 @@
     }
 
     .col-file {
-      width: 26%;
+      width: 13%;
     }
 
     .col-preview {
-      width: 150px;
+      width: 36%;
     }
 
-    .thumb {
-      position: relative;
-      width: 140px;
+    .col-preview video {
+      width: 100%;
       aspect-ratio: 16 / 9;
-      padding: 0;
-      border-radius: 8px;
-      overflow: hidden;
       background: #000;
-      border: 1px solid var(--border);
-    }
-
-    .thumb video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      border-radius: 6px;
       display: block;
     }
 
-    .thumb .play {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-size: 1.6rem;
-      background: rgba(0, 0, 0, 0.25);
+    .skip {
+      margin-top: 6px;
+      justify-content: center;
     }
 
-    .thumb:hover .play {
-      background: rgba(0, 0, 0, 0.45);
-    }
-
-    .player {
-      border: none;
-      padding: 0;
-      background: transparent;
-      max-width: min(960px, calc(100vw - 32px));
-      width: 100%;
-    }
-
-    .player::backdrop {
-      background: rgba(0, 0, 0, 0.75);
-    }
-
-    .player-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      color: #fff;
-      margin-bottom: 8px;
-    }
-
-    .player-head span {
-      font-weight: 600;
-      word-break: break-all;
-    }
-
-    .player video {
-      width: 100%;
-      max-height: 80vh;
-      background: #000;
-      border-radius: 8px;
-      display: block;
+    /* Lets the transcript box stretch to the same height as the video beside it. */
+    .col-text {
+      height: 1px;
     }
 
     .col-status {
-      width: 22%;
+      width: 12%;
     }
 
     .file-name {
@@ -324,8 +276,9 @@
 
     textarea {
       width: 100%;
-      min-height: 120px;
-      padding: 10px;
+      height: 100%;
+      min-height: 110px;
+      padding: 8px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--bg);
@@ -336,8 +289,8 @@
       resize: vertical;
     }
 
-    .copy-row {
-      margin-top: 6px;
+    .copy {
+      margin-top: 8px;
     }
 
     .empty {
@@ -373,8 +326,10 @@
 
       .col-file,
       .col-preview,
-      .col-status {
+      .col-status,
+      .col-text {
         width: 100%;
+        height: auto;
       }
     }
   </style>
@@ -409,7 +364,7 @@
             <th class="col-file">Video</th>
             <th class="col-preview">Preview</th>
             <th class="col-status">Status</th>
-            <th>Transcript</th>
+            <th class="col-text">Transcript</th>
           </tr>
         </thead>
         <tbody id="rows">
@@ -420,14 +375,6 @@
       </table>
     </section>
   </main>
-
-  <dialog class="player" id="player">
-    <div class="player-head">
-      <span id="playerName"></span>
-      <button class="small" id="playerClose">Close</button>
-    </div>
-    <video id="playerVideo" controls></video>
-  </dialog>
 
   <script>
     const API = 'https://api.assemblyai.com/v2';
@@ -482,28 +429,38 @@
           <div class="size">${(job.file.size / 1024 / 1024).toFixed(1)} MB</div>
         </td>
         <td class="col-preview">
-          <button class="thumb" title="Play this video" aria-label="Play this video">
-            <video muted preload="metadata"></video>
-            <span class="play">▶</span>
-          </button>
+          <video controls preload="metadata"></video>
+          <div class="row skip">
+            <button class="small" data-skip="-5" title="Back 5 seconds">« 5s</button>
+            <button class="small" data-skip="-2" title="Back 2 seconds">« 2s</button>
+            <button class="small" data-skip="2" title="Forward 2 seconds">2s »</button>
+            <button class="small" data-skip="5" title="Forward 5 seconds">5s »</button>
+          </div>
         </td>
         <td class="col-status">
           <div class="msg wait">Waiting to start</div>
           <div class="bar"><div></div></div>
           <div class="elapsed"></div>
+          <button class="small copy" disabled>Copy text</button>
         </td>
-        <td>
+        <td class="col-text">
           <textarea spellcheck="false" placeholder="The transcript will appear here."></textarea>
-          <div class="row copy-row"><button class="small copy" disabled>Copy</button></div>
         </td>`;
       tr.querySelector('.file-name').textContent = job.file.name;
       // The preview plays straight from the file on this computer, nothing is downloaded.
       job.url = URL.createObjectURL(job.file);
+      const video = tr.querySelector('video');
       // Jump half a second in, so the preview shows a real frame instead of a black first frame.
-      const thumb = tr.querySelector('.thumb video');
-      thumb.onloadedmetadata = () => { thumb.currentTime = Math.min(0.5, thumb.duration || 0); };
-      thumb.src = job.url;
-      tr.querySelector('.thumb').onclick = () => openPlayer(job);
+      video.onloadedmetadata = () => { if (video.currentTime === 0) video.currentTime = Math.min(0.5, video.duration || 0); };
+      // Only one video plays at a time: starting one pauses the rest.
+      video.onplay = () => jobs.forEach(j => { if (j !== job) j.tr.querySelector('video').pause(); });
+      video.src = job.url;
+      tr.querySelectorAll('[data-skip]').forEach(btn => {
+        btn.onclick = () => {
+          const to = video.currentTime + Number(btn.dataset.skip);
+          video.currentTime = Math.max(0, Math.min(to, video.duration || to));
+        };
+      });
       tr.querySelector('.remove').onclick = () => {
         URL.revokeObjectURL(job.url);
         jobs.splice(jobs.indexOf(job), 1);
@@ -674,22 +631,6 @@
     }
 
     $('copyAll').onclick = () => copyText(allText(), $('copyAll'));
-
-    function openPlayer(job) {
-      $('playerName').textContent = job.file.name;
-      $('playerVideo').src = job.url;
-      $('player').showModal();
-      $('playerVideo').play().catch(() => {});
-    }
-
-    // Closing the popup (button, Esc key, or clicking outside the video) stops the video.
-    $('playerClose').onclick = () => $('player').close();
-    $('player').onclick = e => { if (e.target === $('player')) $('player').close(); };
-    $('player').onclose = () => {
-      $('playerVideo').pause();
-      $('playerVideo').removeAttribute('src');
-      $('playerVideo').load();
-    };
 
     render();
   </script>
