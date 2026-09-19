@@ -141,7 +141,6 @@
     }
 
     .actions {
-      margin-top: 16px;
       justify-content: space-between;
     }
 
@@ -172,6 +171,76 @@
 
     .col-file {
       width: 26%;
+    }
+
+    .col-preview {
+      width: 150px;
+    }
+
+    .thumb {
+      position: relative;
+      width: 140px;
+      aspect-ratio: 16 / 9;
+      padding: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border);
+    }
+
+    .thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb .play {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 1.6rem;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .thumb:hover .play {
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .player {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: min(960px, calc(100vw - 32px));
+      width: 100%;
+    }
+
+    .player::backdrop {
+      background: rgba(0, 0, 0, 0.75);
+    }
+
+    .player-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .player-head span {
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .player video {
+      width: 100%;
+      max-height: 80vh;
+      background: #000;
+      border-radius: 8px;
+      display: block;
     }
 
     .col-status {
@@ -303,6 +372,7 @@
       }
 
       .col-file,
+      .col-preview,
       .col-status {
         width: 100%;
       }
@@ -323,15 +393,12 @@
       <input type="file" id="file" accept="video/*,audio/*" multiple hidden>
       <p class="hint" id="note"></p>
 
-      <div class="row actions">
+      <div class="row actions" id="actions">
         <div class="row">
           <button class="primary" id="go" disabled>Transcribe all</button>
           <button id="clear" disabled>Clear list</button>
         </div>
-        <div class="row">
-          <button id="copyAll" disabled>Copy all</button>
-          <button id="downloadAll" disabled>Download all .txt</button>
-        </div>
+        <button id="copyAll" disabled>Copy all</button>
       </div>
     </section>
 
@@ -340,18 +407,27 @@
         <thead>
           <tr>
             <th class="col-file">Video</th>
+            <th class="col-preview">Preview</th>
             <th class="col-status">Status</th>
             <th>Transcript</th>
           </tr>
         </thead>
         <tbody id="rows">
           <tr>
-            <td colspan="3" class="empty">No videos added yet.</td>
+            <td colspan="4" class="empty">No videos added yet.</td>
           </tr>
         </tbody>
       </table>
     </section>
   </main>
+
+  <dialog class="player" id="player">
+    <div class="player-head">
+      <span id="playerName"></span>
+      <button class="small" id="playerClose">Close</button>
+    </div>
+    <video id="playerVideo" controls></video>
+  </dialog>
 
   <script>
     const API = 'https://api.assemblyai.com/v2';
@@ -405,6 +481,12 @@
           </div>
           <div class="size">${(job.file.size / 1024 / 1024).toFixed(1)} MB</div>
         </td>
+        <td class="col-preview">
+          <button class="thumb" title="Play this video" aria-label="Play this video">
+            <video muted preload="metadata"></video>
+            <span class="play">▶</span>
+          </button>
+        </td>
         <td class="col-status">
           <div class="msg wait">Waiting to start</div>
           <div class="bar"><div></div></div>
@@ -415,7 +497,15 @@
           <div class="row copy-row"><button class="small copy" disabled>Copy</button></div>
         </td>`;
       tr.querySelector('.file-name').textContent = job.file.name;
+      // The preview plays straight from the file on this computer, nothing is downloaded.
+      job.url = URL.createObjectURL(job.file);
+      // Jump half a second in, so the preview shows a real frame instead of a black first frame.
+      const thumb = tr.querySelector('.thumb video');
+      thumb.onloadedmetadata = () => { thumb.currentTime = Math.min(0.5, thumb.duration || 0); };
+      thumb.src = job.url;
+      tr.querySelector('.thumb').onclick = () => openPlayer(job);
       tr.querySelector('.remove').onclick = () => {
+        URL.revokeObjectURL(job.url);
         jobs.splice(jobs.indexOf(job), 1);
         render();
       };
@@ -429,7 +519,7 @@
       const body = $('rows');
       body.innerHTML = '';
       if (!jobs.length) {
-        body.innerHTML = '<tr><td colspan="3" class="empty">No videos added yet.</td></tr>';
+        body.innerHTML = '<tr><td colspan="4" class="empty">No videos added yet.</td></tr>';
       }
       jobs.forEach(j => {
         j.tr.querySelector('.remove').style.visibility = j.state === 'working' ? 'hidden' : '';
@@ -440,8 +530,9 @@
       $('go').disabled = !jobs.some(j => j.state === 'waiting' || j.state === 'error');
       $('clear').disabled = !jobs.length || busy;
       $('copyAll').disabled = !hasText;
-      $('downloadAll').disabled = !hasText;
-      drop.style.display = jobs.length >= MAX_FILES ? 'none' : '';
+      // Before any videos are added only the picker shows; after, only the buttons.
+      drop.style.display = jobs.length ? 'none' : '';
+      $('actions').style.display = jobs.length ? '' : 'none';
     }
 
     function setStatus(job, text, kind = '', progress = null) {
@@ -507,14 +598,6 @@
       return JSON.parse(body);
     }
 
-    // Turn the finished transcript into plain text, one paragraph per speaker.
-    function toText(t) {
-      if (t.utterances && t.utterances.length) {
-        return t.utterances.map(u => `Speaker ${u.speaker}: ${u.text}`).join('\n\n');
-      }
-      return t.text || '';
-    }
-
     async function run(job) {
       job.state = 'working';
       render();
@@ -530,7 +613,7 @@
 
         // Step 2: ask AssemblyAI to transcribe the uploaded file.
         setStatus(job, 'Transcribing…');
-        const request = { audio_url: audioUrl, language_code: 'en', speaker_labels: true };
+        const request = { audio_url: audioUrl, language_code: 'en', speaker_labels: false };
         const created = await api('/transcript', { method: 'POST', body: JSON.stringify(request) });
 
         // Step 3: check every 5 seconds until it is done.
@@ -541,7 +624,7 @@
         }
         if (t.status === 'error') throw new Error(t.error || 'Transcription failed.');
 
-        job.text = toText(t) || '(No speech was found in this file.)';
+        job.text = t.text || '(No speech was found in this file.)';
         job.tr.querySelector('textarea').value = job.text;
         job.tr.querySelector('.copy').disabled = false;
         job.state = 'done';
@@ -561,6 +644,7 @@
     };
 
     $('clear').onclick = () => {
+      jobs.forEach(j => URL.revokeObjectURL(j.url));
       jobs.length = 0;
       $('note').textContent = '';
       render();
@@ -591,13 +675,20 @@
 
     $('copyAll').onclick = () => copyText(allText(), $('copyAll'));
 
-    $('downloadAll').onclick = () => {
-      const blob = new Blob([allText()], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'transcripts.txt';
-      a.click();
-      URL.revokeObjectURL(a.href);
+    function openPlayer(job) {
+      $('playerName').textContent = job.file.name;
+      $('playerVideo').src = job.url;
+      $('player').showModal();
+      $('playerVideo').play().catch(() => {});
+    }
+
+    // Closing the popup (button, Esc key, or clicking outside the video) stops the video.
+    $('playerClose').onclick = () => $('player').close();
+    $('player').onclick = e => { if (e.target === $('player')) $('player').close(); };
+    $('player').onclose = () => {
+      $('playerVideo').pause();
+      $('playerVideo').removeAttribute('src');
+      $('playerVideo').load();
     };
 
     render();
