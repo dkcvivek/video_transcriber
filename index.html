@@ -53,14 +53,23 @@
       padding: 16px 16px 32px;
     }
 
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
     h1 {
       font-size: 1.3rem;
-      margin: 0 0 2px;
+      margin: 0;
     }
 
     .sub {
       color: var(--muted);
-      margin: 0 0 12px;
+      margin: 2px 0 0;
     }
 
     .card {
@@ -140,10 +149,6 @@
       font-size: 1.05rem;
     }
 
-    .actions {
-      justify-content: space-between;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -173,21 +178,34 @@
       width: 13%;
     }
 
+    /* Shrinks to fit the video. */
     .col-preview {
-      width: 36%;
+      width: 1%;
     }
 
+    /* Video height is worked out from the screen height so at least 4 rows fit:
+       (screen - header and table top) / 4 rows - (skip buttons + row padding). */
     .col-preview video {
-      width: 100%;
+      height: clamp(80px, calc((100vh - 110px) / 4 - 46px), 240px);
+      width: auto;
       aspect-ratio: 16 / 9;
       background: #000;
       border-radius: 6px;
       display: block;
+      margin: 0 auto;
     }
 
     .skip {
-      margin-top: 6px;
+      margin-top: 4px;
+      gap: 4px;
+      flex-wrap: nowrap;
       justify-content: center;
+    }
+
+    .skip button {
+      white-space: nowrap;
+      padding: 2px 8px;
+      font-size: 0.8rem;
     }
 
     /* Lets the transcript box stretch to the same height as the video beside it. */
@@ -276,8 +294,8 @@
 
     textarea {
       width: 100%;
-      height: 100%;
-      min-height: 110px;
+      flex: 1;
+      min-height: 60px;
       padding: 8px;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -289,8 +307,19 @@
       resize: vertical;
     }
 
-    .copy {
-      margin-top: 8px;
+    .text-cell {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    /* Same size as the skip buttons, so both sit on the same line at the bottom of the row. */
+    button.copy {
+      flex: none;
+      padding: 2px 8px;
+      font-size: 0.8rem;
     }
 
     .empty {
@@ -331,30 +360,36 @@
         width: 100%;
         height: auto;
       }
+
+      .col-preview video {
+        width: 100%;
+        height: auto;
+      }
     }
   </style>
 </head>
 
 <body>
   <main>
-    <h1>Video Transcriber</h1>
-    <p class="sub">Add up to 15 videos, transcribe them all at once, and copy the text from each row.</p>
+    <header class="top">
+      <div>
+        <h1>Video Transcriber</h1>
+        <p class="sub" id="sub">Add up to 15 videos, transcribe them all at once, and copy the text from each row.</p>
+        <p class="hint" id="note"></p>
+      </div>
+      <div class="row" id="actions">
+        <button class="primary" id="go" disabled>Transcribe all</button>
+        <button id="clear" disabled>Clear list</button>
+        <button id="copyAll" disabled>Copy all</button>
+      </div>
+    </header>
 
-    <section class="card">
+    <section class="card" id="picker">
       <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose video or audio files">
         <strong>Drop videos here, or click to choose</strong>
         <span class="hint">Up to 15 files · MP4, MOV, MKV, WEBM, MP3, WAV, M4A…</span>
       </div>
       <input type="file" id="file" accept="video/*,audio/*" multiple hidden>
-      <p class="hint" id="note"></p>
-
-      <div class="row actions" id="actions">
-        <div class="row">
-          <button class="primary" id="go" disabled>Transcribe all</button>
-          <button id="clear" disabled>Clear list</button>
-        </div>
-        <button id="copyAll" disabled>Copy all</button>
-      </div>
     </section>
 
     <section class="card">
@@ -441,10 +476,12 @@
           <div class="msg wait">Waiting to start</div>
           <div class="bar"><div></div></div>
           <div class="elapsed"></div>
-          <button class="small copy" disabled>Copy text</button>
         </td>
         <td class="col-text">
-          <textarea spellcheck="false" placeholder="The transcript will appear here."></textarea>
+          <div class="text-cell">
+            <textarea spellcheck="false" placeholder="The transcript will appear here."></textarea>
+            <button class="small copy" disabled>Copy text</button>
+          </div>
         </td>`;
       tr.querySelector('.file-name').textContent = job.file.name;
       // The preview plays straight from the file on this computer, nothing is downloaded.
@@ -488,7 +525,8 @@
       $('clear').disabled = !jobs.length || busy;
       $('copyAll').disabled = !hasText;
       // Before any videos are added only the picker shows; after, only the buttons.
-      drop.style.display = jobs.length ? 'none' : '';
+      $('picker').style.display = jobs.length ? 'none' : '';
+      $('sub').style.display = jobs.length ? 'none' : '';
       $('actions').style.display = jobs.length ? '' : 'none';
     }
 
