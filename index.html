@@ -152,31 +152,6 @@
       word-break: break-all;
     }
 
-    .options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 400;
-      margin-top: 30px;
-    }
-
-    @media (max-width: 520px) {
-      .options {
-        grid-template-columns: 1fr;
-      }
-
-      .check {
-        margin-top: 0;
-      }
-    }
-
     .status {
       display: none;
     }
@@ -267,21 +242,6 @@
         <div class="file-name" id="fileName"></div>
       </div>
       <input type="file" id="file" accept="video/*,audio/*" hidden>
-
-      <div class="options">
-        <div>
-          <label for="lang">Language</label>
-          <select id="lang">
-            <option value="auto">Detect automatically</option>
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-          </select>
-        </div>
-        <label class="check"><input type="checkbox" id="speakers"> Label each speaker</label>
-      </div>
 
       <div class="row" style="margin-top:16px">
         <button class="primary" id="go" disabled>Transcribe</button>
@@ -397,9 +357,9 @@
       return JSON.parse(body);
     }
 
-    // Turn the finished transcript into plain text, with speaker names if asked for.
-    function toText(t, withSpeakers) {
-      if (withSpeakers && t.utterances && t.utterances.length) {
+    // Turn the finished transcript into plain text, one paragraph per speaker.
+    function toText(t) {
+      if (t.utterances && t.utterances.length) {
         return t.utterances.map(u => `Speaker ${u.speaker}: ${u.text}`).join('\n\n');
       }
       return t.text || '';
@@ -407,8 +367,6 @@
 
     $('go').onclick = async () => {
       const key = ASSEMBLYAI_KEY;
-      const lang = $('lang').value;
-      const withSpeakers = $('speakers').checked;
 
       $('go').disabled = true;
       $('result').classList.remove('show');
@@ -421,9 +379,7 @@
 
         // Step 2: ask AssemblyAI to transcribe the uploaded file.
         setStatus('Transcribing… this usually takes a fraction of the video length.');
-        const request = { audio_url: audioUrl, speaker_labels: withSpeakers };
-        if (lang === 'auto') request.language_detection = true;
-        else request.language_code = lang;
+        const request = { audio_url: audioUrl, language_code: 'en', speaker_labels: true };
         const job = await api('/transcript', key, { method: 'POST', body: JSON.stringify(request) });
 
         // Step 3: check every 3 seconds until it is done.
@@ -434,7 +390,7 @@
         }
         if (t.status === 'error') throw new Error(t.error || 'Transcription failed.');
 
-        const text = toText(t, withSpeakers);
+        const text = toText(t);
         $('text').value = text || '(No speech was found in this file.)';
         $('result').classList.add('show');
         setStatus('Done.', 'ok');
