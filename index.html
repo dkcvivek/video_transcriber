@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Transcriber</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --text: #1b1f24;
+      --muted: #5f6b7a;
+      --border: #dde2e8;
+      --accent: #2f6fed;
+      --accent-text: #ffffff;
+      --ok: #1f8a4c;
+      --err: #c62f2f;
+      --drop: #eef3fe;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111418;
+        --card: #1a1e24;
+        --text: #e6e9ed;
+        --muted: #9aa5b1;
+        --border: #2d333b;
+        --accent: #5b8cff;
+        --accent-text: #0b1020;
+        --ok: #4cc67f;
+        --err: #ff6b6b;
+        --drop: #1d2635;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 16px 64px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 4px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type=password],
+    input[type=text],
+    select {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin: 6px 0 0;
+    }
+
+    .drop {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 36px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .drop.over,
+    .drop:hover {
+      background: var(--drop);
+      border-color: var(--accent);
+    }
+
+    .drop strong {
+      display: block;
+      font-size: 1.05rem;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 400;
+      margin-top: 30px;
+    }
+
+    @media (max-width: 520px) {
+      .options {
+        grid-template-columns: 1fr;
+      }
+
+      .check {
+        margin-top: 0;
+      }
+    }
+
+    .status {
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .bar>div {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.2s;
+    }
+
+    .bar.busy>div {
+      width: 35%;
+      animation: slide 1.2s infinite ease-in-out;
+    }
+
+    @keyframes slide {
+      from {
+        margin-left: -35%;
+      }
+
+      to {
+        margin-left: 100%;
+      }
+    }
+
+    .msg {
+      font-weight: 600;
+    }
+
+    .msg.err {
+      color: var(--err);
+    }
+
+    .msg.ok {
+      color: var(--ok);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      resize: vertical;
+    }
+
+    .result-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .result-head h2 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Video Transcriber</h1>
+    <p class="sub">Upload a video or audio file and get the text back, ready to copy.</p>
+
+    <section class="card">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a video or audio file">
+        <strong>Drop a video here, or click to choose</strong>
+        <span class="hint">MP4, MOV, MKV, WEBM, MP3, WAV, M4A…</span>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <input type="file" id="file" accept="video/*,audio/*" hidden>
+
+      <div class="options">
+        <div>
+          <label for="lang">Language</label>
+          <select id="lang">
+            <option value="auto">Detect automatically</option>
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="speakers"> Label each speaker</label>
+      </div>
+
+      <div class="row" style="margin-top:16px">
+        <button class="primary" id="go" disabled>Transcribe</button>
+      </div>
+    </section>
+
+    <section class="card status" id="status">
+      <div class="msg" id="msg"></div>
+      <div class="bar" id="bar">
+        <div id="barFill"></div>
+      </div>
+      <p class="hint" id="elapsed"></p>
+    </section>
+
+    <section class="card status" id="result">
+      <div class="result-head">
+        <h2>Transcript</h2>
+        <div class="row">
+          <button id="copy">Copy</button>
+          <button id="download">Download .txt</button>
+        </div>
+      </div>
+      <textarea id="text" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const API = 'https://api.assemblyai.com/v2';
+    const $ = id => document.getElementById(id);
+
+    // Paste the AssemblyAI API key here once.
+    const ASSEMBLYAI_KEY = '88e7e255a592447fa252a8d48fe19c96';
+
+    let file = null;
+    let timer = null;
+
+    // Picking a file: by click, keyboard, or drag and drop.
+    const drop = $('drop');
+    drop.onclick = () => $('file').click();
+    drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+    $('file').onchange = () => pickFile($('file').files[0]);
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+    drop.ondragleave = () => drop.classList.remove('over');
+    drop.ondrop = e => {
+      e.preventDefault();
+      drop.classList.remove('over');
+      pickFile(e.dataTransfer.files[0]);
+    };
+
+    function pickFile(f) {
+      if (!f) return;
+      file = f;
+      $('fileName').textContent = `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB)`;
+      refreshButton();
+    }
+
+    function refreshButton() {
+      $('go').disabled = !file;
+    }
+
+    function setStatus(text, kind = '', progress = null) {
+      $('status').classList.add('show');
+      $('msg').textContent = text;
+      $('msg').className = 'msg ' + kind;
+      const bar = $('bar');
+      bar.style.display = kind ? 'none' : '';
+      bar.classList.toggle('busy', progress === null && !kind);
+      $('barFill').style.width = progress === null ? '' : progress + '%';
+    }
+
+    function startTimer() {
+      const start = Date.now();
+      clearInterval(timer);
+      timer = setInterval(() => {
+        const s = Math.floor((Date.now() - start) / 1000);
+        $('elapsed').textContent = `Time so far: ${Math.floor(s / 60)}m ${s % 60}s`;
+      }, 1000);
+    }
+
+    // Step 1: send the file to AssemblyAI. XMLHttpRequest is used because it reports upload progress.
+    function upload(key) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', API + '/upload');
+        xhr.setRequestHeader('authorization', key);
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            setStatus(`Uploading… ${pct}%`, '', pct);
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText).upload_url);
+          else reject(new Error(readError(xhr.status, xhr.responseText)));
+        };
+        xhr.onerror = () => reject(new Error('Network error while uploading.'));
+        xhr.send(file);
+      });
+    }
+
+    function readError(status, body) {
+      try { return JSON.parse(body).error || `Request failed (${status})`; }
+      catch { return status === 401 ? 'The API key was not accepted.' : `Request failed (${status})`; }
+    }
+
+    async function api(path, key, options = {}) {
+      const res = await fetch(API + path, {
+        ...options,
+        headers: { authorization: key, 'content-type': 'application/json' },
+      });
+      const body = await res.text();
+      if (!res.ok) throw new Error(readError(res.status, body));
+      return JSON.parse(body);
+    }
+
+    // Turn the finished transcript into plain text, with speaker names if asked for.
+    function toText(t, withSpeakers) {
+      if (withSpeakers && t.utterances && t.utterances.length) {
+        return t.utterances.map(u => `Speaker ${u.speaker}: ${u.text}`).join('\n\n');
+      }
+      return t.text || '';
+    }
+
+    $('go').onclick = async () => {
+      const key = ASSEMBLYAI_KEY;
+      const lang = $('lang').value;
+      const withSpeakers = $('speakers').checked;
+
+      $('go').disabled = true;
+      $('result').classList.remove('show');
+      $('elapsed').textContent = '';
+      startTimer();
+
+      try {
+        setStatus('Uploading… 0%', '', 0);
+        const audioUrl = await upload(key);
+
+        // Step 2: ask AssemblyAI to transcribe the uploaded file.
+        setStatus('Transcribing… this usually takes a fraction of the video length.');
+        const request = { audio_url: audioUrl, speaker_labels: withSpeakers };
+        if (lang === 'auto') request.language_detection = true;
+        else request.language_code = lang;
+        const job = await api('/transcript', key, { method: 'POST', body: JSON.stringify(request) });
+
+        // Step 3: check every 3 seconds until it is done.
+        let t = job;
+        while (t.status !== 'completed' && t.status !== 'error') {
+          await new Promise(r => setTimeout(r, 3000));
+          t = await api('/transcript/' + job.id, key);
+        }
+        if (t.status === 'error') throw new Error(t.error || 'Transcription failed.');
+
+        const text = toText(t, withSpeakers);
+        $('text').value = text || '(No speech was found in this file.)';
+        $('result').classList.add('show');
+        setStatus('Done.', 'ok');
+      } catch (e) {
+        setStatus(e.message, 'err');
+      } finally {
+        clearInterval(timer);
+        refreshButton();
+      }
+    };
+
+    $('copy').onclick = async () => {
+      try { await navigator.clipboard.writeText($('text').value); }
+      catch { $('text').select(); document.execCommand('copy'); }
+      $('copy').textContent = 'Copied!';
+      setTimeout(() => $('copy').textContent = 'Copy', 1500);
+    };
+
+    $('download').onclick = () => {
+      const blob = new Blob([$('text').value], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (file ? file.name.replace(/\.[^.]+$/, '') : 'transcript') + '.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    refreshButton();
+  </script>
+</body>
+
+</html>
