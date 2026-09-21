@@ -195,6 +195,25 @@
       margin: 0 auto;
     }
 
+    /* Captions over the video. The browser's default size is too small on these small players.
+       Edge and Chrome only take the size from their own -webkit- rule; ::cue is for Firefox.
+       Each selector needs its own rule, because a browser drops any rule with a selector it doesn't know. */
+    .col-preview video::-webkit-media-text-track-container {
+      font-size: 16px !important;
+    }
+
+    .col-preview video:fullscreen::-webkit-media-text-track-container {
+      font-size: 32px !important;
+    }
+
+    .col-preview video::cue {
+      font-size: 16px;
+    }
+
+    .col-preview video:fullscreen::cue {
+      font-size: 32px;
+    }
+
     .skip {
       margin-top: 4px;
       gap: 4px;
@@ -618,6 +637,7 @@
 
         job.text = t.text || '(No speech was found in this file.)';
         job.tr.querySelector('textarea').value = job.text;
+        showCaptions(job, t.words || []);
         job.tr.querySelector('.copy').disabled = false;
         job.state = 'done';
         setStatus(job, 'Done', 'ok');
@@ -628,6 +648,56 @@
         clearInterval(timer);
         render();
       }
+    }
+
+    // Groups the transcript's timed words into short captions.
+    function buildCaptions(words) {
+      const MAX_CHARS = 64;
+      const PAUSE_MS = 1500;
+
+      // First split into phrases at the end of each sentence and at long pauses.
+      const phrases = [];
+      let phrase = [];
+      for (const w of words) {
+        const last = phrase[phrase.length - 1];
+        if (last && (/[.?!]$/.test(last.text) || w.start - last.end > PAUSE_MS)) {
+          phrases.push(phrase);
+          phrase = [];
+        }
+        phrase.push(w);
+      }
+      if (phrase.length) phrases.push(phrase);
+
+      // Then cut long phrases into pieces of about equal length, so no caption is left with just a word or two.
+      const cues = [];
+      for (const words of phrases) {
+        const total = words.reduce((n, w) => n + w.text.length + 1, 0);
+        const count = Math.ceil(total / MAX_CHARS);
+        const pieces = [];
+        let pos = 0;
+        for (const w of words) {
+          const i = Math.min(count - 1, Math.floor((pos + w.text.length / 2) / (total / count)));
+          (pieces[i] = pieces[i] || []).push(w);
+          pos += w.text.length + 1;
+        }
+        pieces.filter(Boolean).forEach(p => cues.push({
+          start: p[0].start,
+          end: p[p.length - 1].end,
+          text: p.map(w => w.text).join(' '),
+        }));
+      }
+      // Keep each caption up to 1 second longer so it can be read, without overlapping the next one.
+      cues.forEach((c, i) => { c.end = Math.min(c.end + 1000, cues[i + 1] ? cues[i + 1].start : Infinity); });
+      return cues;
+    }
+
+    // Shows the captions on the row's video. They can be turned off with the player's CC button.
+    function showCaptions(job, words) {
+      const video = job.tr.querySelector('video');
+      job.track = job.track || video.addTextTrack('captions', 'English', 'en');
+      job.track.mode = 'showing';
+      [...job.track.cues].forEach(c => job.track.removeCue(c));
+      buildCaptions(words).forEach(c => job.track.addCue(new VTTCue(c.start / 1000, c.end / 1000, c.text)));
     }
 
     // Starts every row that hasn't finished yet. Failed rows are tried again.
