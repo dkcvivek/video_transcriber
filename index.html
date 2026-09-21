@@ -528,6 +528,13 @@
         jobs.splice(jobs.indexOf(job), 1);
         render();
       };
+      // Anything typed into the transcript box is turned to capitals too, keeping the cursor where it was.
+      const box = tr.querySelector('textarea');
+      box.oninput = () => {
+        const { selectionStart, selectionEnd } = box;
+        box.value = box.value.toUpperCase();
+        box.setSelectionRange(selectionStart, selectionEnd);
+      };
       const copyBtn = tr.querySelector('.copy');
       copyBtn.onclick = () => copyText(tr.querySelector('textarea').value, copyBtn);
       return tr;
@@ -665,7 +672,7 @@
         }
         if (t.status === 'error') throw new Error(t.error || 'Transcription failed.');
 
-        job.text = t.text || '(No speech was found in this file.)';
+        job.text = (t.text || '(No speech was found in this file.)').toUpperCase();
         await addSubtitles(job, created.id);
         job.tr.querySelector('textarea').value = job.text;
         showCaptions(job, t.words || []);
